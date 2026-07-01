@@ -307,7 +307,7 @@
 
     .game-screen {
       position: relative;
-      grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+      grid-template-columns: minmax(0, 1.34fr) minmax(220px, 0.66fr);
       gap: 14px;
       padding: 16px;
     }
@@ -316,11 +316,11 @@
     .tray-panel {
       min-height: 0;
       display: grid;
-      gap: 12px;
+      gap: 10px;
       background: var(--panel-soft);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      padding: 14px;
+      padding: 12px;
       overflow: hidden;
     }
 
@@ -333,11 +333,31 @@
     }
 
     .topbar {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
       align-items: center;
+    }
+
+    .topbar > div:first-child {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .topbar .status {
+      gap: 6px;
+    }
+
+    .topbar .top-actions {
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .topbar .tool-btn,
+    .topbar .action-btn {
+      padding: 8px 11px;
+      font-size: 0.84rem;
     }
 
     .topbar h2,
@@ -346,6 +366,11 @@
     .completion h3,
     .final-box h3 {
       margin: 0 0 4px;
+    }
+
+    .topbar h2 {
+      font-size: 1.12rem;
+      margin-bottom: 0;
     }
 
     .status {
@@ -358,18 +383,18 @@
     .journey-chip {
       display: inline-flex;
       align-items: center;
-      padding: 9px 12px;
+      padding: 7px 10px;
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--line);
       color: var(--muted);
-      font-size: 0.92rem;
+      font-size: 0.84rem;
     }
 
     .journey {
       display: grid;
-      gap: 8px;
-      padding: 14px;
+      gap: 6px;
+      padding: 10px 12px;
       border-radius: 18px;
       background: rgba(111, 211, 255, 0.1);
       border: 1px solid rgba(111, 211, 255, 0.2);
@@ -381,14 +406,14 @@
     .final-box p {
       margin: 0;
       color: var(--muted);
-      line-height: 1.32;
-      font-size: 0.94rem;
+      line-height: 1.26;
+      font-size: 0.88rem;
     }
 
     .journey-list {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
     }
 
     .journey-chip.done {
@@ -440,6 +465,7 @@
       color: rgba(255, 255, 255, 0.45);
       padding: 18px;
       pointer-events: none;
+      font-size: 0.95rem;
     }
 
     .tray-scroll {
@@ -669,7 +695,7 @@
         <div class="journey">
           <div>
             <h3>Ruta de aprendizaje</h3>
-            <p>Completa fecundacion, morula y blastocisto. Al final podras descargar una imagen resumen en 16:9.</p>
+            <p>Completa las 3 etapas y descarga la imagen final.</p>
           </div>
           <div class="journey-list" id="journeyList"></div>
         </div>
@@ -685,7 +711,7 @@
       <aside class="tray-panel">
         <div class="tray-header">
           <h2>Piezas disponibles</h2>
-          <p>Las piezas incorrectas vuelven a la bandeja. Si hay muchas, la bandeja se desplaza por dentro sin mover la pagina.</p>
+          <p>Si hay muchas piezas, la bandeja se desplaza por dentro.</p>
         </div>
         <div class="tray-scroll" id="trayScroll">
           <div class="tray-inner" id="trayInner"></div>
@@ -1003,13 +1029,18 @@
       ctx.lineTo(x1, y1);
     }
 
-    function renderPiece(boardCanvas, r, c, cellW, cellH, tabs, margin, amp) {
+    function renderPiece(sourceImage, r, c, cellW, cellH, tabs, margin, amp, sourceCellW, sourceCellH) {
       const width = Math.round(cellW + margin * 2);
       const height = Math.round(cellH + margin * 2);
       const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
+      const deviceScale = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(width * deviceScale);
+      canvas.height = Math.round(height * deviceScale);
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      canvas.style.display = "block";
       const ctx = canvas.getContext("2d");
+      ctx.scale(deviceScale, deviceScale);
       ctx.save();
       ctx.translate(margin, margin);
       ctx.beginPath();
@@ -1021,7 +1052,35 @@
       ctx.closePath();
       ctx.save();
       ctx.clip();
-      ctx.drawImage(boardCanvas, -c * cellW, -r * cellH);
+      const scaleX = sourceCellW / cellW;
+      const scaleY = sourceCellH / cellH;
+      const sourceMarginX = margin * scaleX;
+      const sourceMarginY = margin * scaleY;
+      const rawSourceX = c * sourceCellW - sourceMarginX;
+      const rawSourceY = r * sourceCellH - sourceMarginY;
+      const rawSourceW = sourceCellW + sourceMarginX * 2;
+      const rawSourceH = sourceCellH + sourceMarginY * 2;
+      const sourceX = Math.max(0, rawSourceX);
+      const sourceY = Math.max(0, rawSourceY);
+      const sourceRight = Math.min(sourceImage.width, rawSourceX + rawSourceW);
+      const sourceBottom = Math.min(sourceImage.height, rawSourceY + rawSourceH);
+      const sourceW = Math.max(1, sourceRight - sourceX);
+      const sourceH = Math.max(1, sourceBottom - sourceY);
+      const destX = (sourceX - rawSourceX) / scaleX - margin;
+      const destY = (sourceY - rawSourceY) / scaleY - margin;
+      const destW = sourceW / scaleX;
+      const destH = sourceH / scaleY;
+      ctx.drawImage(
+        sourceImage,
+        sourceX,
+        sourceY,
+        sourceW,
+        sourceH,
+        destX,
+        destY,
+        destW,
+        destH
+      );
       ctx.restore();
       ctx.lineWidth = 2;
       ctx.strokeStyle = "rgba(32, 18, 14, 0.5)";
@@ -1089,21 +1148,18 @@
       const boardSize = syncBoardFrameSize() || Math.floor(boardFrame.clientWidth);
       state.boardSize = boardSize;
       state.boardImage = await createImage(state.selectedStage.image);
-      const boardCanvas = document.createElement("canvas");
-      boardCanvas.width = boardSize;
-      boardCanvas.height = boardSize;
-      const boardCtx = boardCanvas.getContext("2d");
-      boardCtx.drawImage(state.boardImage, 0, 0, boardSize, boardSize);
       boardGuide.src = state.selectedStage.image;
       updateGuide();
 
       const cellW = boardSize / state.piecesPerSide;
       const cellH = boardSize / state.piecesPerSide;
+      const sourceCellW = state.boardImage.width / state.piecesPerSide;
+      const sourceCellH = state.boardImage.height / state.piecesPerSide;
       const amp = Math.min(cellW, cellH) * 0.26;
       const margin = amp * 1.15;
       state.margin = margin;
       const pieceSize = cellW + margin * 2;
-      const trayPieceSize = Math.max(72, Math.min(132, pieceSize * 0.62));
+      const trayPieceSize = Math.max(32, Math.min(pieceSize, Math.round(pieceSize * 0.88)));
 
       const edges = buildEdges(state.piecesPerSide, state.piecesPerSide);
       const pieceData = [];
@@ -1116,7 +1172,18 @@
       const trayPositions = buildTrayLayout(trayPieceSize, pieceData.length);
 
       shuffle(pieceData).forEach((data, index) => {
-        const canvas = renderPiece(boardCanvas, data.row, data.col, cellW, cellH, data.tabs, margin, amp);
+        const canvas = renderPiece(
+          state.boardImage,
+          data.row,
+          data.col,
+          cellW,
+          cellH,
+          data.tabs,
+          margin,
+          amp,
+          sourceCellW,
+          sourceCellH
+        );
         const el = document.createElement("div");
         el.className = "piece";
         el.style.width = `${pieceSize}px`;
