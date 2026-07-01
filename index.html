@@ -406,9 +406,8 @@
 
     .board-frame {
       position: relative;
-      width: min(100%, calc(100vh - 390px));
-      aspect-ratio: 1 / 1;
-      max-height: 100%;
+      width: 100%;
+      height: auto;
       border-radius: 20px;
       background: rgba(255, 255, 255, 0.05);
       box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.16);
@@ -580,9 +579,6 @@
         display: none;
       }
 
-      .board-frame {
-        width: min(100%, calc(100vh - 470px));
-      }
     }
 
     @media (max-width: 760px) {
@@ -678,7 +674,7 @@
           <div class="journey-list" id="journeyList"></div>
         </div>
 
-        <div class="board-wrap">
+        <div class="board-wrap" id="boardWrap">
           <div class="board-frame" id="boardFrame">
             <img class="board-guide" id="boardGuide" alt="">
             <div class="hint-empty" id="hintEmpty">Arrastra las piezas al tablero</div>
@@ -785,6 +781,7 @@
     const guideBtn = document.getElementById("guideBtn");
     const changeBtn = document.getElementById("changeBtn");
     const restartBtn = document.getElementById("restartBtn");
+    const boardWrap = document.getElementById("boardWrap");
     const boardFrame = document.getElementById("boardFrame");
     const boardGuide = document.getElementById("boardGuide");
     const hintEmpty = document.getElementById("hintEmpty");
@@ -913,6 +910,18 @@
       difficultyBadge.textContent = `${difficultyLabel(state.piecesPerSide)} - ${state.total} piezas`;
       progressBadge.textContent = `Progreso: ${state.placedCount} / ${state.total}`;
       updateTimer();
+    }
+
+    function syncBoardFrameSize() {
+      const availableWidth = boardWrap.clientWidth;
+      const availableHeight = boardWrap.clientHeight;
+      if (!availableWidth || !availableHeight) {
+        return 0;
+      }
+      const size = Math.max(220, Math.floor(Math.min(availableWidth, availableHeight) - 6));
+      boardFrame.style.width = `${size}px`;
+      boardFrame.style.height = `${size}px`;
+      return size;
     }
 
     function openGame() {
@@ -1077,7 +1086,7 @@
       completionBox.classList.remove("active");
       updateHeader();
 
-      const boardSize = Math.floor(boardFrame.clientWidth);
+      const boardSize = syncBoardFrameSize() || Math.floor(boardFrame.clientWidth);
       state.boardSize = boardSize;
       state.boardImage = await createImage(state.selectedStage.image);
       const boardCanvas = document.createElement("canvas");
@@ -1243,6 +1252,7 @@
       state.guideVisible = false;
       finalBox.classList.toggle("active", state.completedStages.size === stages.length);
       openGame();
+      syncBoardFrameSize();
       updateGuide();
       await buildPuzzle();
       trayScroll.scrollTop = 0;
@@ -1357,6 +1367,9 @@
       startGame();
     });
     downloadBtn.addEventListener("click", downloadFinalImage);
+    window.addEventListener("resize", () => {
+      syncBoardFrameSize();
+    });
 
     renderStages();
     renderPresets();
