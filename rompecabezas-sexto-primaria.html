@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Rompecabezas de Sexto de Primaria</title>
+  <style>
+    :root {
+      --bg-1: #0b1d37;
+      --bg-2: #173c69;
+      --panel: rgba(8, 22, 43, 0.86);
+      --panel-soft: rgba(255, 255, 255, 0.07);
+      --line: rgba(255, 255, 255, 0.14);
+      --text: #eef5ff;
+      --muted: #c4d5f3;
+      --accent: #ff7f8d;
+      --accent-2: #6fd3ff;
+      --accent-3: #ffb26b;
+      --success: #7ce7a4;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(111, 211, 255, 0.18), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(255, 127, 141, 0.18), transparent 24%),
+        linear-gradient(140deg, var(--bg-1), var(--bg-2));
+    }
+
+    body {
+      padding: 12px;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .app {
+      max-width: 1600px;
+      height: 100%;
+      margin: 0 auto;
+    }
+
+    .screen {
+      display: none;
+      height: 100%;
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .screen.active {
+      display: grid;
+    }
+
+    .setup-screen {
+      grid-template-rows: auto auto 1fr;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .heading h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.8rem, 2.6vw, 3rem);
+      line-height: 1.02;
+    }
+
+    .heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(0.95rem, 1.2vw, 1.08rem);
+      line-height: 1.3;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1.22fr 0.98fr;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .panel-card {
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      min-height: 0;
+    }
+
+    .preview-card {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto auto;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .preview-image {
+      width: 100%;
+      min-height: 0;
+      border-radius: 18px;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-color: rgba(0, 0, 0, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .preview-card h2 {
+      margin: 0;
+      font-size: clamp(1.3rem, 1.7vw, 1.9rem);
+    }
+
+    .preview-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 0.98rem;
+    }
+
+    .stage-selector {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stage-chip,
+    .preset-btn,
+    .action-btn,
+    .tool-btn {
+      border: 0;
+      cursor: pointer;
+      color: inherit;
+      font: inherit;
+    }
+
+    .stage-chip {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 9px;
+      border-radius: 18px;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid transparent;
+      min-width: 0;
+    }
+
+    .stage-chip img {
+      width: 58px;
+      height: 58px;
+      border-radius: 13px;
+      object-fit: contain;
+      background: rgba(0, 0, 0, 0.16);
+      display: block;
+    }
+
+    .stage-chip strong,
+    .stage-chip span {
+      display: block;
+    }
+
+    .stage-chip span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.2;
+    }
+
+    .stage-chip.selected {
+      border-color: rgba(111, 211, 255, 0.95);
+      background: rgba(111, 211, 255, 0.12);
+      box-shadow: 0 0 0 3px rgba(111, 211, 255, 0.14);
+    }
+
+    .control-card {
+      display: grid;
+      grid-template-rows: auto auto auto 1fr auto;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .section-title {
+      margin: 0;
+      color: var(--accent-2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.96rem;
+    }
+
+    .preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .preset-btn {
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-weight: 700;
+    }
+
+    .preset-btn.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-3));
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .slider-wrap {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .slider-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .slider-top strong {
+      font-size: 1rem;
+    }
+
+    .slider-top span {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      margin: 0;
+    }
+
+    .slider-scale {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .setup-info {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      color: var(--muted);
+      line-height: 1.32;
+      font-size: 0.95rem;
+    }
+
+    .setup-summary {
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .setup-actions,
+    .top-actions,
+    .final-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .action-btn,
+    .tool-btn {
+      padding: 13px 18px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .action-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-3));
+      color: #fff;
+      box-shadow: 0 12px 30px rgba(255, 127, 141, 0.26);
+    }
+
+    .tool-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--line);
+      color: var(--text);
+    }
+
+    .game-screen {
+      position: relative;
+      grid-template-columns: minmax(0, 1.34fr) minmax(220px, 0.66fr);
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .board-panel,
+    .tray-panel {
+      min-height: 0;
+      display: grid;
+      gap: 10px;
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    .board-panel {
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .tray-panel {
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .topbar > div:first-child {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .topbar .status {
+      gap: 6px;
+    }
+
+    .topbar .top-actions {
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .topbar .tool-btn,
+    .topbar .action-btn {
+      padding: 8px 11px;
+      font-size: 0.84rem;
+    }
+
+    .topbar h2,
+    .journey h3,
+    .tray-header h2,
+    .completion h3,
+    .final-box h3 {
+      margin: 0 0 4px;
+    }
+
+    .topbar h2 {
+      font-size: 1.12rem;
+      margin-bottom: 0;
+    }
+
+    .status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .badge,
+    .journey-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .journey {
+      display: grid;
+      gap: 6px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(111, 211, 255, 0.1);
+      border: 1px solid rgba(111, 211, 255, 0.2);
+    }
+
+    .journey p,
+    .tray-header p,
+    .completion p,
+    .final-box p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.26;
+      font-size: 0.88rem;
+    }
+
+    .journey-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .journey-chip.done {
+      background: rgba(124, 231, 164, 0.18);
+      border-color: rgba(124, 231, 164, 0.34);
+      color: #fff;
+    }
+
+    .board-wrap {
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .board-frame {
+      position: relative;
+      width: 100%;
+      height: auto;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.16);
+      overflow: visible;
+    }
+
+    .board-guide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 18px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 120ms ease;
+    }
+
+    .board-guide.visible {
+      opacity: 0.26;
+    }
+
+    .hint-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.45);
+      padding: 18px;
+      pointer-events: none;
+      font-size: 0.95rem;
+    }
+
+    .tray-scroll {
+      position: relative;
+      min-height: 0;
+      overflow: auto;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+
+    .tray-inner {
+      position: relative;
+      min-height: 100%;
+    }
+
+    .piece {
+      position: absolute;
+      cursor: grab;
+      touch-action: none;
+      filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45));
+    }
+
+    .piece.dragging {
+      cursor: grabbing;
+      z-index: 90;
+      filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.56));
+    }
+
+    .piece.placed {
+      cursor: default;
+    }
+
+    .piece canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .piece.pop {
+      animation: pop 0.28s ease;
+    }
+
+    .piece.shake {
+      animation: shake 0.25s ease;
+    }
+
+    .completion,
+    .final-box {
+      display: none;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 18px;
+    }
+
+    .completion {
+      background: rgba(124, 231, 164, 0.12);
+      border: 1px solid rgba(124, 231, 164, 0.28);
+    }
+
+    .final-box {
+      background: rgba(255, 127, 141, 0.12);
+      border: 1px solid rgba(255, 127, 141, 0.28);
+    }
+
+    .completion.active,
+    .final-box.active {
+      display: grid;
+    }
+
+    .tablet-link {
+      color: var(--accent-2);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .drag-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.16); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    @media (max-width: 1100px) and (orientation: landscape) {
+      .heading h1 {
+        font-size: clamp(1.45rem, 2vw, 2.2rem);
+      }
+
+      .heading p,
+      .preview-card p,
+      .setup-info {
+        font-size: 0.9rem;
+      }
+    }
+
+    @media (max-width: 1100px) and (orientation: portrait) {
+      .setup-screen {
+        grid-template-rows: auto auto 1fr;
+      }
+
+      .menu-grid,
+      .game-screen {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-card {
+        grid-template-rows: minmax(170px, 25vh) auto auto;
+      }
+
+      .stage-selector {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .stage-chip {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .stage-chip img {
+        width: 100%;
+        height: 54px;
+      }
+
+      .stage-chip span {
+        display: none;
+      }
+
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 8px;
+      }
+
+      .setup-screen,
+      .game-screen {
+        padding: 12px;
+      }
+
+      .heading h1 {
+        font-size: clamp(1.4rem, 7vw, 2rem);
+      }
+
+      .difficulty-chip,
+      .preset-btn,
+      .action-btn,
+      .tool-btn,
+      .badge {
+        font-size: 0.88rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="screen setup-screen active" id="setupScreen">
+      <div class="heading">
+        <h1>Rompecabezas de ciencia para sexto de primaria</h1>
+        <p>Elige una imagen, ajusta la dificultad con precision y arma un rompecabezas con piezas de forma real.</p>
+      </div>
+
+      <div class="menu-grid">
+        <div class="panel-card preview-card">
+          <div class="preview-image" id="previewImage"></div>
+          <h2 id="previewTitle"></h2>
+          <p id="previewDescription"></p>
+          <div class="stage-selector" id="stageSelector"></div>
+        </div>
+
+        <div class="panel-card control-card">
+          <h2 class="section-title">Dificultad exacta</h2>
+          <div class="preset-row" id="presetRow"></div>
+          <div class="slider-wrap">
+            <div class="slider-top">
+              <strong id="difficultyName">Facil</strong>
+              <span id="difficultyReadout">3 x 3 - 9 piezas</span>
+            </div>
+            <input type="range" id="difficultySlider" min="2" max="12" step="1" value="3">
+            <div class="slider-scale">
+              <span>2</span>
+              <span>12</span>
+            </div>
+          </div>
+          <div class="setup-info">
+            <div class="setup-summary" id="selectionSummary"></div>
+            <div>La guia empieza oculta por defecto.</div>
+            <div>El cronometro cuenta desde que comienzan hasta la ultima pieza de la tercera etapa.</div>
+            <div>Tambien puedes revisar la simulacion en <a class="tablet-link" href="tablet-preview-sexto-primaria.html" target="_blank" rel="noopener">tablet-preview-sexto-primaria.html</a>.</div>
+          </div>
+          <div class="setup-actions">
+            <button class="action-btn" id="startBtn">Iniciar rompecabezas</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen game-screen" id="gameScreen">
+      <div class="board-panel">
+        <div class="topbar">
+          <div>
+            <h2 id="boardTitle">Rompecabezas</h2>
+            <div class="status">
+              <span class="badge" id="difficultyBadge"></span>
+              <span class="badge" id="progressBadge"></span>
+              <span class="badge" id="timerBadge">Tiempo: 00:00</span>
+            </div>
+          </div>
+          <div class="top-actions">
+            <button class="tool-btn" id="guideBtn">Mostrar guia</button>
+            <button class="tool-btn" id="changeBtn">Cambiar etapa</button>
+            <button class="action-btn" id="restartBtn">Reiniciar</button>
+          </div>
+        </div>
+
+        <div class="journey">
+          <div>
+            <h3>Ruta de aprendizaje</h3>
+            <p>Completa las 3 imagenes y descarga la imagen final.</p>
+          </div>
+          <div class="journey-list" id="journeyList"></div>
+        </div>
+
+        <div class="board-wrap" id="boardWrap">
+          <div class="board-frame" id="boardFrame">
+            <img class="board-guide" id="boardGuide" alt="">
+            <div class="hint-empty" id="hintEmpty">Arrastra las piezas al tablero</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="tray-panel">
+        <div class="tray-header">
+          <h2>Piezas disponibles</h2>
+          <p>Si hay muchas piezas, la bandeja se desplaza por dentro.</p>
+        </div>
+        <div class="tray-scroll" id="trayScroll">
+          <div class="tray-inner" id="trayInner"></div>
+        </div>
+        <div class="completion" id="completionBox">
+          <h3>Rompecabezas completado</h3>
+          <p id="completionText"></p>
+          <div class="final-actions">
+            <button class="action-btn" id="playAgainBtn">Jugar de nuevo</button>
+          </div>
+        </div>
+        <div class="final-box" id="finalBox">
+          <h3>Tres imagenes completadas</h3>
+          <p id="finalText"></p>
+          <div class="final-actions">
+            <button class="action-btn" id="downloadBtn">Descargar imagen final</button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="drag-layer" id="dragLayer"></div>
+    </section>
+  </main>
+
+  <script>
+    const stages = [
+      {
+        id: "humedal",
+        title: "Humedal tropical",
+        image: "assets/sexto-primaria/humedal-tropical.png",
+        description: "Observa un ecosistema con animales y plantas que viven entre el agua y la tierra.",
+        note: "En un humedal, peces, aves, anfibios, insectos y plantas comparten el mismo ecosistema."
+      },
+      {
+        id: "diversidad",
+        title: "Diversidad natural",
+        image: "assets/sexto-primaria/diversidad-ecosistemas.png",
+        description: "Explora alimentos, animales, paisajes y procesos naturales presentes en distintos ambientes.",
+        note: "La naturaleza presenta diversidad de especies, paisajes y relaciones como la polinizacion y el reciclaje de la materia."
+      },
+      {
+        id: "peru",
+        title: "Biodiversidad del Peru",
+        image: "assets/sexto-primaria/biodiversidad-peru.png",
+        description: "Reconoce paisajes y especies representativas del Peru en una sola ilustracion.",
+        note: "El Peru tiene una gran biodiversidad, con especies y paisajes distintos en costa, sierra y selva."
+      }
+    ];
+
+    const presets = [
+      { label: "Muy facil", value: 2 },
+      { label: "Facil", value: 3 },
+      { label: "Media", value: 4 },
+      { label: "Dificil", value: 6 },
+      { label: "Experta", value: 8 },
+      { label: "Maestra", value: 10 }
+    ];
+
+    const state = {
+      selectedStage: stages[0],
+      piecesPerSide: 3,
+      guideVisible: false,
+      completedStages: new Set(),
+      timerStartedAt: null,
+      timerInterval: null,
+      elapsedMs: 0,
+      pieces: [],
+      placedCount: 0,
+      total: 0,
+      boardImage: null,
+      boardSize: 0,
+      margin: 0
+    };
+
+    const SNAP_DIST_FRAC = 0.34;
+
+    const setupScreen = document.getElementById("setupScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const previewImage = document.getElementById("previewImage");
+    const previewTitle = document.getElementById("previewTitle");
+    const previewDescription = document.getElementById("previewDescription");
+    const stageSelector = document.getElementById("stageSelector");
+    const presetRow = document.getElementById("presetRow");
+    const difficultySlider = document.getElementById("difficultySlider");
+    const difficultyName = document.getElementById("difficultyName");
+    const difficultyReadout = document.getElementById("difficultyReadout");
+    const selectionSummary = document.getElementById("selectionSummary");
+    const startBtn = document.getElementById("startBtn");
+    const boardTitle = document.getElementById("boardTitle");
+    const difficultyBadge = document.getElementById("difficultyBadge");
+    const progressBadge = document.getElementById("progressBadge");
+    const timerBadge = document.getElementById("timerBadge");
+    const guideBtn = document.getElementById("guideBtn");
+    const changeBtn = document.getElementById("changeBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const boardWrap = document.getElementById("boardWrap");
+    const boardFrame = document.getElementById("boardFrame");
+    const boardGuide = document.getElementById("boardGuide");
+    const hintEmpty = document.getElementById("hintEmpty");
+    const trayScroll = document.getElementById("trayScroll");
+    const trayInner = document.getElementById("trayInner");
+    const dragLayer = document.getElementById("dragLayer");
+    const journeyList = document.getElementById("journeyList");
+    const completionBox = document.getElementById("completionBox");
+    const completionText = document.getElementById("completionText");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const finalBox = document.getElementById("finalBox");
+    const finalText = document.getElementById("finalText");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    function difficultyLabel(n) {
+      if (n <= 2) return "Muy facil";
+      if (n === 3) return "Facil";
+      if (n === 4) return "Media";
+      if (n <= 6) return "Dificil";
+      if (n <= 8) return "Experta";
+      return "Maestra";
+    }
+
+    function formatTime(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+      const seconds = String(totalSeconds % 60).padStart(2, "0");
+      return `${minutes}:${seconds}`;
+    }
+
+    function updateTimer() {
+      if (!state.timerStartedAt) {
+        timerBadge.textContent = "Tiempo: 00:00";
+        return;
+      }
+      state.elapsedMs = Date.now() - state.timerStartedAt;
+      timerBadge.textContent = `Tiempo: ${formatTime(state.elapsedMs)}`;
+    }
+
+    function startTimer() {
+      if (!state.timerStartedAt) {
+        state.timerStartedAt = Date.now();
+      }
+      window.clearInterval(state.timerInterval);
+      updateTimer();
+      state.timerInterval = window.setInterval(updateTimer, 1000);
+    }
+
+    function stopTimer() {
+      window.clearInterval(state.timerInterval);
+      state.timerInterval = null;
+      updateTimer();
+    }
+
+    function updateSetupTexts() {
+      const n = state.piecesPerSide;
+      const total = n * n;
+      difficultyName.textContent = difficultyLabel(n);
+      difficultyReadout.textContent = `${n} x ${n} - ${total} piezas`;
+      selectionSummary.textContent = `${state.selectedStage.title} - ${difficultyLabel(n)} - ${total} piezas`;
+      previewImage.style.backgroundImage = `url("${state.selectedStage.image}")`;
+      previewTitle.textContent = state.selectedStage.title;
+      previewDescription.textContent = state.selectedStage.description;
+      [...presetRow.children].forEach((button) => {
+        button.classList.toggle("active", Number(button.dataset.value) === n);
+      });
+    }
+
+    function renderStages() {
+      stageSelector.innerHTML = "";
+      stages.forEach((stage) => {
+        const button = document.createElement("button");
+        button.className = "stage-chip";
+        if (stage.id === state.selectedStage.id) {
+          button.classList.add("selected");
+        }
+        button.innerHTML = `
+          <img src="${stage.image}" alt="${stage.title}">
+          <div>
+            <strong>${stage.title}</strong>
+            <span>${stage.description}</span>
+          </div>
+        `;
+        button.addEventListener("click", () => {
+          state.selectedStage = stage;
+          renderStages();
+          updateSetupTexts();
+        });
+        stageSelector.appendChild(button);
+      });
+    }
+
+    function renderPresets() {
+      presetRow.innerHTML = "";
+      presets.forEach((preset) => {
+        const button = document.createElement("button");
+        button.className = "preset-btn";
+        button.dataset.value = String(preset.value);
+        button.textContent = preset.label;
+        button.addEventListener("click", () => {
+          state.piecesPerSide = preset.value;
+          difficultySlider.value = String(preset.value);
+          updateSetupTexts();
+        });
+        presetRow.appendChild(button);
+      });
+    }
+
+    function renderJourney() {
+      journeyList.innerHTML = "";
+      stages.forEach((stage) => {
+        const chip = document.createElement("div");
+        chip.className = "journey-chip";
+        if (state.completedStages.has(stage.id)) {
+          chip.classList.add("done");
+          chip.textContent = `${stage.title} completada`;
+        } else {
+          chip.textContent = `${stage.title} pendiente`;
+        }
+        journeyList.appendChild(chip);
+      });
+    }
+
+    function updateHeader() {
+      boardTitle.textContent = state.selectedStage.title;
+      difficultyBadge.textContent = `${difficultyLabel(state.piecesPerSide)} - ${state.total} piezas`;
+      progressBadge.textContent = `Progreso: ${state.placedCount} / ${state.total}`;
+      updateTimer();
+    }
+
+    function syncBoardFrameSize() {
+      const availableWidth = boardWrap.clientWidth;
+      const availableHeight = boardWrap.clientHeight;
+      if (!availableWidth || !availableHeight) {
+        return 0;
+      }
+      const size = Math.max(220, Math.floor(Math.min(availableWidth, availableHeight) - 6));
+      boardFrame.style.width = `${size}px`;
+      boardFrame.style.height = `${size}px`;
+      return size;
+    }
+
+    function openGame() {
+      setupScreen.classList.remove("active");
+      gameScreen.classList.add("active");
+    }
+
+    function openSetup() {
+      cleanupAllPieces();
+      gameScreen.classList.remove("active");
+      setupScreen.classList.add("active");
+      completionBox.classList.remove("active");
+    }
+
+    function createImage(src) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = src;
+      });
+    }
+
+    function buildEdges(rows, cols) {
+      const horiz = [];
+      const vert = [];
+      for (let r = 0; r < rows; r += 1) {
+        horiz.push([]);
+        for (let c = 0; c < cols - 1; c += 1) {
+          horiz[r].push(Math.random() < 0.5 ? 1 : -1);
+        }
+      }
+      for (let r = 0; r < rows - 1; r += 1) {
+        vert.push([]);
+        for (let c = 0; c < cols; c += 1) {
+          vert[r].push(Math.random() < 0.5 ? 1 : -1);
+        }
+      }
+      return { horiz, vert };
+    }
+
+    function tabsFor(r, c, rows, cols, edges) {
+      return {
+        top: r === 0 ? 0 : -edges.vert[r - 1][c],
+        bottom: r === rows - 1 ? 0 : edges.vert[r][c],
+        left: c === 0 ? 0 : -edges.horiz[r][c - 1],
+        right: c === cols - 1 ? 0 : edges.horiz[r][c]
+      };
+    }
+
+    function bumpTo(ctx, x0, y0, x1, y1, nx, ny, size, tab) {
+      if (!tab) {
+        ctx.lineTo(x1, y1);
+        return;
+      }
+      const s = size * tab;
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      function point(t, off) {
+        return {
+          x: x0 + dx * t + nx * s * off,
+          y: y0 + dy * t + ny * s * off
+        };
+      }
+      const p = point(0.4, 0);
+      ctx.lineTo(p.x, p.y);
+      const c1 = point(0.4, 0.22);
+      const c2 = point(0.28, 0.68);
+      const e1 = point(0.37, 0.68);
+      ctx.bezierCurveTo(c1.x, c1.y, c2.x, c2.y, e1.x, e1.y);
+      const c3 = point(0.28, 1.1);
+      const c4 = point(0.72, 1.1);
+      const e2 = point(0.63, 0.68);
+      ctx.bezierCurveTo(c3.x, c3.y, c4.x, c4.y, e2.x, e2.y);
+      const c5 = point(0.72, 0.68);
+      const c6 = point(0.6, 0.22);
+      const e3 = point(0.6, 0);
+      ctx.bezierCurveTo(c5.x, c5.y, c6.x, c6.y, e3.x, e3.y);
+      ctx.lineTo(x1, y1);
+    }
+
+    function renderPiece(sourceImage, r, c, cellW, cellH, tabs, margin, amp, sourceCellW, sourceCellH) {
+      const width = Math.round(cellW + margin * 2);
+      const height = Math.round(cellH + margin * 2);
+      const canvas = document.createElement("canvas");
+      const deviceScale = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(width * deviceScale);
+      canvas.height = Math.round(height * deviceScale);
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      canvas.style.display = "block";
+      const ctx = canvas.getContext("2d");
+      ctx.scale(deviceScale, deviceScale);
+      ctx.save();
+      ctx.translate(margin, margin);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      bumpTo(ctx, 0, 0, cellW, 0, 0, -1, amp, tabs.top);
+      bumpTo(ctx, cellW, 0, cellW, cellH, 1, 0, amp, tabs.right);
+      bumpTo(ctx, cellW, cellH, 0, cellH, 0, 1, amp, tabs.bottom);
+      bumpTo(ctx, 0, cellH, 0, 0, -1, 0, amp, tabs.left);
+      ctx.closePath();
+      ctx.save();
+      ctx.clip();
+      const scaleX = sourceCellW / cellW;
+      const scaleY = sourceCellH / cellH;
+      const sourceMarginX = margin * scaleX;
+      const sourceMarginY = margin * scaleY;
+      const rawSourceX = c * sourceCellW - sourceMarginX;
+      const rawSourceY = r * sourceCellH - sourceMarginY;
+      const rawSourceW = sourceCellW + sourceMarginX * 2;
+      const rawSourceH = sourceCellH + sourceMarginY * 2;
+      const sourceX = Math.max(0, rawSourceX);
+      const sourceY = Math.max(0, rawSourceY);
+      const sourceRight = Math.min(sourceImage.width, rawSourceX + rawSourceW);
+      const sourceBottom = Math.min(sourceImage.height, rawSourceY + rawSourceH);
+      const sourceW = Math.max(1, sourceRight - sourceX);
+      const sourceH = Math.max(1, sourceBottom - sourceY);
+      const destX = (sourceX - rawSourceX) / scaleX - margin;
+      const destY = (sourceY - rawSourceY) / scaleY - margin;
+      const destW = sourceW / scaleX;
+      const destH = sourceH / scaleY;
+      ctx.drawImage(
+        sourceImage,
+        sourceX,
+        sourceY,
+        sourceW,
+        sourceH,
+        destX,
+        destY,
+        destW,
+        destH
+      );
+      ctx.restore();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(32, 18, 14, 0.5)";
+      ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
+      ctx.shadowBlur = 2;
+      ctx.stroke();
+      ctx.restore();
+      return canvas;
+    }
+
+    function buildTrayLayout(pieceSize, count) {
+      const trayWidth = trayScroll.clientWidth;
+      const gap = Math.max(8, Math.round(pieceSize * 0.08));
+      const cols = Math.max(1, Math.floor((trayWidth - gap) / (pieceSize + gap)));
+      const rows = Math.ceil(count / cols);
+      const innerHeight = rows * (pieceSize + gap) + gap;
+      trayInner.style.height = `${innerHeight}px`;
+      const positions = [];
+      for (let index = 0; index < count; index += 1) {
+        const row = Math.floor(index / cols);
+        const col = index % cols;
+        const jitterX = (Math.random() - 0.5) * Math.min(8, pieceSize * 0.04);
+        const jitterY = (Math.random() - 0.5) * Math.min(8, pieceSize * 0.04);
+        positions.push({
+          left: gap + col * (pieceSize + gap) + jitterX,
+          top: gap + row * (pieceSize + gap) + jitterY
+        });
+      }
+      return positions;
+    }
+
+    function clearBoard() {
+      state.pieces.forEach((piece) => piece.el.remove());
+      state.pieces = [];
+      trayInner.innerHTML = "";
+      hintEmpty.style.display = "flex";
+    }
+
+    function cleanupAllPieces() {
+      clearBoard();
+      dragLayer.innerHTML = "";
+    }
+
+    function shuffle(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function updateGuide() {
+      boardGuide.classList.toggle("visible", state.guideVisible);
+      guideBtn.textContent = state.guideVisible ? "Ocultar guia" : "Mostrar guia";
+    }
+
+    async function buildPuzzle() {
+      clearBoard();
+      state.placedCount = 0;
+      state.total = state.piecesPerSide * state.piecesPerSide;
+      completionBox.classList.remove("active");
+      updateHeader();
+
+      const boardSize = syncBoardFrameSize() || Math.floor(boardFrame.clientWidth);
+      state.boardSize = boardSize;
+      state.boardImage = await createImage(state.selectedStage.image);
+      boardGuide.src = state.selectedStage.image;
+      updateGuide();
+
+      const cellW = boardSize / state.piecesPerSide;
+      const cellH = boardSize / state.piecesPerSide;
+      const sourceCellW = state.boardImage.width / state.piecesPerSide;
+      const sourceCellH = state.boardImage.height / state.piecesPerSide;
+      const amp = Math.min(cellW, cellH) * 0.26;
+      const margin = amp * 1.15;
+      state.margin = margin;
+      const pieceSize = cellW + margin * 2;
+      const trayPieceSize = Math.max(32, Math.min(pieceSize, Math.round(pieceSize * 0.88)));
+
+      const edges = buildEdges(state.piecesPerSide, state.piecesPerSide);
+      const pieceData = [];
+      for (let row = 0; row < state.piecesPerSide; row += 1) {
+        for (let col = 0; col < state.piecesPerSide; col += 1) {
+          pieceData.push({ row, col, tabs: tabsFor(row, col, state.piecesPerSide, state.piecesPerSide, edges) });
+        }
+      }
+
+      const trayPositions = buildTrayLayout(trayPieceSize, pieceData.length);
+
+      shuffle(pieceData).forEach((data, index) => {
+        const canvas = renderPiece(
+          state.boardImage,
+          data.row,
+          data.col,
+          cellW,
+          cellH,
+          data.tabs,
+          margin,
+          amp,
+          sourceCellW,
+          sourceCellH
+        );
+        const el = document.createElement("div");
+        el.className = "piece";
+        el.style.width = `${pieceSize}px`;
+        el.style.height = `${pieceSize}px`;
+        el.appendChild(canvas);
+
+        const piece = {
+          el,
+          row: data.row,
+          col: data.col,
+          placed: false,
+          originalSize: pieceSize,
+          traySize: trayPieceSize,
+          homeLeft: data.col * cellW - margin,
+          homeTop: data.row * cellH - margin,
+          trayLeft: trayPositions[index].left,
+          trayTop: trayPositions[index].top
+        };
+
+        el.dataset.row = String(data.row);
+        el.dataset.col = String(data.col);
+        el.style.width = `${piece.traySize}px`;
+        el.style.height = `${piece.traySize}px`;
+        el.style.left = `${piece.trayLeft}px`;
+        el.style.top = `${piece.trayTop}px`;
+        trayInner.appendChild(el);
+        attachDrag(piece, cellW, cellH);
+        state.pieces.push(piece);
+      });
+    }
+
+    function attachDrag(piece, cellW, cellH) {
+      let dragInfo = null;
+
+      piece.el.addEventListener("pointerdown", (event) => {
+        if (piece.placed) {
+          return;
+        }
+        event.preventDefault();
+        const elementRect = piece.el.getBoundingClientRect();
+        dragInfo = {
+          ratioX: (event.clientX - elementRect.left) / elementRect.width,
+          ratioY: (event.clientY - elementRect.top) / elementRect.height
+        };
+        piece.el.style.width = `${piece.originalSize}px`;
+        piece.el.style.height = `${piece.originalSize}px`;
+        piece.el.style.left = `${event.clientX - dragInfo.ratioX * piece.originalSize}px`;
+        piece.el.style.top = `${event.clientY - dragInfo.ratioY * piece.originalSize}px`;
+        dragLayer.appendChild(piece.el);
+        piece.el.classList.add("dragging");
+        piece.el.setPointerCapture(event.pointerId);
+      });
+
+      piece.el.addEventListener("pointermove", (event) => {
+        if (!dragInfo || piece.placed) {
+          return;
+        }
+        piece.el.style.left = `${event.clientX - dragInfo.ratioX * piece.originalSize}px`;
+        piece.el.style.top = `${event.clientY - dragInfo.ratioY * piece.originalSize}px`;
+      });
+
+      const endDrag = (event) => {
+        if (!dragInfo || piece.placed) {
+          return;
+        }
+        dragInfo = null;
+        piece.el.classList.remove("dragging");
+        try {
+          piece.el.releasePointerCapture(event.pointerId);
+        } catch (error) {
+          void error;
+        }
+
+        const currentLeft = parseFloat(piece.el.style.left);
+        const currentTop = parseFloat(piece.el.style.top);
+        const currentCenterX = currentLeft + piece.originalSize / 2;
+        const currentCenterY = currentTop + piece.originalSize / 2;
+        const boardRect = boardFrame.getBoundingClientRect();
+        const targetLeft = boardRect.left + piece.homeLeft;
+        const targetTop = boardRect.top + piece.homeTop;
+        const targetCenterX = targetLeft + piece.originalSize / 2;
+        const targetCenterY = targetTop + piece.originalSize / 2;
+        const threshold = Math.min(cellW, cellH) * 0.58;
+        const distance = Math.hypot(currentCenterX - targetCenterX, currentCenterY - targetCenterY);
+
+        if (distance <= threshold) {
+          piece.placed = true;
+          piece.el.classList.add("placed", "pop");
+          piece.el.style.width = `${piece.originalSize}px`;
+          piece.el.style.height = `${piece.originalSize}px`;
+          piece.el.style.left = `${piece.homeLeft}px`;
+          piece.el.style.top = `${piece.homeTop}px`;
+          boardFrame.appendChild(piece.el);
+          state.placedCount += 1;
+          hintEmpty.style.display = "none";
+          updateHeader();
+          window.setTimeout(() => piece.el.classList.remove("pop"), 280);
+          checkComplete();
+        } else {
+          piece.el.style.width = `${piece.traySize}px`;
+          piece.el.style.height = `${piece.traySize}px`;
+          piece.el.style.left = `${piece.trayLeft}px`;
+          piece.el.style.top = `${piece.trayTop}px`;
+          trayInner.appendChild(piece.el);
+          piece.el.classList.add("shake");
+          window.setTimeout(() => piece.el.classList.remove("shake"), 250);
+        }
+      };
+
+      piece.el.addEventListener("pointerup", endDrag);
+      piece.el.addEventListener("pointercancel", endDrag);
+    }
+
+    function checkComplete() {
+      if (state.placedCount !== state.total) {
+        return;
+      }
+      state.completedStages.add(state.selectedStage.id);
+      renderJourney();
+      completionText.textContent = state.selectedStage.note;
+      completionBox.classList.add("active");
+      if (state.completedStages.size === stages.length) {
+        stopTimer();
+        finalText.textContent = `Completaste las 3 imagenes en ${formatTime(state.elapsedMs)}. Ya puedes descargar la imagen final.`;
+        finalBox.classList.add("active");
+      }
+    }
+
+    async function startGame() {
+      if (!state.timerStartedAt || !state.timerInterval) {
+        startTimer();
+      }
+      state.guideVisible = false;
+      finalBox.classList.toggle("active", state.completedStages.size === stages.length);
+      openGame();
+      syncBoardFrameSize();
+      updateGuide();
+      await buildPuzzle();
+      trayScroll.scrollTop = 0;
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(" ");
+      let line = "";
+      let currentY = y;
+      words.forEach((word) => {
+        const testLine = `${line}${word} `;
+        if (ctx.measureText(testLine).width > maxWidth && line) {
+          ctx.fillText(line.trim(), x, currentY);
+          line = `${word} `;
+          currentY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      });
+      if (line.trim()) {
+        ctx.fillText(line.trim(), x, currentY);
+      }
+    }
+
+    async function downloadFinalImage() {
+      if (state.completedStages.size !== stages.length) {
+        return;
+      }
+
+      const images = await Promise.all(stages.map((stage) => createImage(stage.image)));
+      const canvas = document.createElement("canvas");
+      canvas.width = 1600;
+      canvas.height = 900;
+      const ctx = canvas.getContext("2d");
+
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, "#0b1d37");
+      gradient.addColorStop(1, "#173c69");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.fillRect(40, 40, 1520, 820);
+
+      ctx.fillStyle = "#eef5ff";
+      ctx.font = "700 42px Trebuchet MS";
+      ctx.fillText("Rompecabezas de sexto completado", 70, 100);
+      ctx.font = "28px Trebuchet MS";
+      ctx.fillStyle = "#c4d5f3";
+      ctx.fillText(`Tiempo total: ${formatTime(state.elapsedMs)}`, 70, 142);
+
+      const cardWidth = 450;
+      const imageSize = 414;
+      const cardHeight = 620;
+      const top = 188;
+      const gap = 45;
+
+      images.forEach((image, index) => {
+        const left = 70 + index * (cardWidth + gap);
+        ctx.fillStyle = "rgba(8, 22, 43, 0.84)";
+        ctx.fillRect(left, top, cardWidth, cardHeight);
+        ctx.drawImage(image, left + 18, top + 18, imageSize, imageSize);
+
+        ctx.strokeStyle = "rgba(255,255,255,0.26)";
+        ctx.lineWidth = 2;
+        for (let line = 1; line < 6; line += 1) {
+          const px = left + 18 + (imageSize / 6) * line;
+          const py = top + 18 + (imageSize / 6) * line;
+          ctx.beginPath();
+          ctx.moveTo(px, top + 18);
+          ctx.lineTo(px, top + 18 + imageSize);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(left + 18, py);
+          ctx.lineTo(left + 18 + imageSize, py);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = "#eef5ff";
+        ctx.font = "700 30px Trebuchet MS";
+        ctx.fillText(stages[index].title, left + 18, top + 478);
+        ctx.font = "22px Trebuchet MS";
+        ctx.fillStyle = "#c4d5f3";
+        wrapText(ctx, stages[index].note, left + 18, top + 516, cardWidth - 36, 27);
+      });
+
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = "rompecabezas-sexto-primaria.png";
+      link.click();
+    }
+
+    difficultySlider.addEventListener("input", () => {
+      state.piecesPerSide = Number(difficultySlider.value);
+      updateSetupTexts();
+    });
+
+    startBtn.addEventListener("click", () => {
+      startGame();
+    });
+
+    guideBtn.addEventListener("click", () => {
+      state.guideVisible = !state.guideVisible;
+      updateGuide();
+    });
+
+    changeBtn.addEventListener("click", openSetup);
+    restartBtn.addEventListener("click", () => {
+      startGame();
+    });
+    playAgainBtn.addEventListener("click", () => {
+      startGame();
+    });
+    downloadBtn.addEventListener("click", downloadFinalImage);
+    window.addEventListener("resize", () => {
+      syncBoardFrameSize();
+    });
+
+    renderStages();
+    renderPresets();
+    renderJourney();
+    updateSetupTexts();
+    updateTimer();
+  </script>
+</body>
+</html>
